@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SELF v SELFIE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap');
+
+:root {
+  --bg:          #fafafa;
+  --white:       #ffffff;
+  --surface:     #f4f4f4;
+  --border:      #e8e8e8;
+  --border-hi:   #d0d0d0;
+  --text:        #111111;
+  --muted:       #888888;
+  --faint:       #bbbbbb;
+  --dim:         #eeeeee;
+
+  /* The gradient — used precisely once at full strength */
+  --grad-a:      #f58529;
+  --grad-b:      #dd2a7b;
+  --grad-c:      #8134af;
+  --gradient:    linear-gradient(45deg, #f58529, #dd2a7b, #8134af);
+
+  /* Feed (left) — slightly warm */
+  --feed-bg:     #ffffff;
+  --feed-border: #e8e8e4;
+
+  /* Draft (right) — slightly cool */
+  --draft-bg:    #f6f7f9;
+  --draft-border:#e4e6ea;
+
+  /* Reading */
+  --read-bg:     #f2ede6;
+  --read-text:   #1a1410;
+  --read-muted:  #7a6a58;
+  --read-sepia:  #8b6840;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.screen { display: none; position: relative; z-index: 1; }
+.screen.active { display: flex; }
+
+/* ── PROGRESS ── */
+.prog-wrap {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--dim); z-index: 200;
+}
+.prog-fill {
+  height: 100%;
+  background: var(--gradient);
+  transition: width 0.7s ease; width: 0%;
+}
+
+/* ── INTRO ── */
+#intro {
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+  text-align: center;
+}
+
+.intro-badge {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.5rem; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 2.5rem;
+}
+
+/* The title: gradient on SELFIE, plain on SELF */
+.intro-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  line-height: 1; letter-spacing: -0.03em;
+  margin-bottom: 1rem; display: flex;
+  align-items: center; justify-content: center;
+  gap: 0.3em; flex-wrap: wrap;
+}
+
+.title-self {
+  color: var(--text);
+}
+
+.title-v {
+  font-weight: 300; color: var(--faint);
+  font-size: 0.65em;
+}
+
+.title-selfie {
+  background: var(--gradient);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.intro-sub {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  color: var(--muted); margin-bottom: 3rem;
+}
+
+.intro-premise {
+  font-size: 0.88rem; line-height: 1.95;
+  color: var(--muted); max-width: 420px;
+  margin: 0 auto 3rem;
+}
+
+.intro-premise strong { color: var(--text); font-weight: 500; }
+
+/* The two-column preview */
+.intro-preview {
+  display: grid; grid-template-columns: 1fr 1fr;
+  max-width: 520px; margin: 0 auto 3rem;
+  border: 1px solid var(--border);
+  border-radius: 2px; overflow: hidden;
+  text-align: left;
+}
+
+.preview-col {
+  padding: 1rem;
+}
+
+.preview-col.feed { background: var(--feed-bg); border-right: 1px solid var(--border); }
+.preview-col.draft { background: var(--draft-bg); }
+
+.preview-col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.46rem; letter-spacing: 0.22em;
+  text-transform: uppercase; margin-bottom: 0.6rem;
+}
+.feed .preview-col-label { color: var(--grad-b); }
+.draft .preview-col-label { color: var(--muted); }
+
+.preview-col-desc {
+  font-size: 0.72rem; color: var(--muted); line-height: 1.65;
+}
+
+.begin-btn {
+  display: inline-block;
+  padding: 0.85rem 2.2rem;
+  background: var(--gradient);
+  color: #fff; border: none; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 500; font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+}
+.begin-btn:hover { opacity: 0.85; }
+
+.intro-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; letter-spacing: 0.1em;
+  color: var(--faint); margin-top: 1.2rem;
+}
+
+/* ── QUESTION SCREEN ── */
+#room {
+  min-height: 100vh;
+  flex-direction: column;
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+  max-width: 900px; margin: 0 auto; width: 100%;
+}
+
+.room-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2.5rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hud-counter {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.5rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.hud-prompt-label {
+  font-size: 0.72rem; color: var(--text);
+  font-weight: 500; text-align: center; flex: 1;
+}
+
+.hud-gap {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.46rem; letter-spacing: 0.1em;
+  color: var(--faint); text-align: right;
+}
+
+/* Column headers */
+.col-headers {
+  display: grid; grid-template-columns: 1fr 3px 1fr;
+  gap: 0; margin-bottom: 1rem;
+}
+
+.col-header {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.48rem; letter-spacing: 0.22em;
+  text-transform: uppercase; padding: 0 0 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.col-header.feed-header { color: var(--grad-b); }
+.col-header.draft-header { color: var(--muted); padding-left: 1.2rem; }
+.col-header-divider { background: var(--border); }
+
+.col-header-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.feed-header .col-header-dot { background: var(--gradient); }
+.draft-header .col-header-dot { background: var(--faint); }
+
+/* The split */
+.gap-grid {
+  display: grid; grid-template-columns: 1fr 3px 1fr;
+  flex: 1; gap: 0; margin-bottom: 2rem;
+}
+
+.gap-divider {
+  background: var(--border);
+  position: relative;
+}
+
+.gap-divider::after {
+  content: 'GAP';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.4rem; letter-spacing: 0.3em;
+  color: var(--faint); white-space: nowrap;
+}
+
+.col-panel {
+  padding: 1.2rem; display: flex; flex-direction: column;
+}
+
+.col-panel.feed-panel {
+  background: var(--feed-bg);
+  border: 1px solid var(--feed-border);
+  border-right: none;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+}
+
+.col-panel.draft-panel {
+  background: var(--draft-bg);
+  border: 1px solid var(--draft-border);
+  border-left: none;
+}
+
+.col-prompt {
+  font-size: 0.8rem; font-weight: 400;
+  line-height: 1.65; color: var(--text);
+  margin-bottom: 0.8rem;
+}
+
+.col-prompt-sub {
+  font-size: 0.7rem; font-weight: 300;
+  color: var(--muted); line-height: 1.6;
+  margin-bottom: 0.8rem; font-style: italic;
+}
+
+.col-input {
+  width: 100%; background: transparent;
+  border: none; border-bottom: 1px solid var(--border);
+  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem; font-weight: 300;
+  padding: 0.5rem 0; resize: none; outline: none;
+  line-height: 1.8; transition: border-color 0.25s;
+  flex: 1; min-height: 80px;
+}
+.col-input:focus { border-bottom-color: var(--grad-b); }
+.col-input::placeholder { color: var(--faint); font-style: italic; }
+
+.draft-panel .col-input:focus { border-bottom-color: var(--muted); }
+
+.col-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; letter-spacing: 0.08em;
+  color: var(--faint); margin-top: 0.3rem; min-height: 1em;
+}
+
+/* Nav */
+.room-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 1.2rem; border-top: 1px solid var(--border);
+}
+
+.nav-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; color: var(--faint); letter-spacing: 0.08em;
+}
+
+.nav-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 500; font-size: 0.7rem;
+  padding: 0.5rem 1.2rem; cursor: pointer; transition: all 0.18s;
+  border-radius: 2px;
+}
+.nav-btn:hover:not(:disabled) { border-color: var(--border-hi); color: var(--text); }
+.nav-btn:disabled { opacity: 0.2; cursor: default; pointer-events: none; }
+.nav-btn.primary {
+  background: var(--gradient); color: #fff; border: none;
+}
+.nav-btn.primary:hover { opacity: 0.85; }
+
+/* Processing */
+.processing {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.48rem; letter-spacing: 0.18em;
+  color: var(--muted); text-transform: uppercase;
+}
+.dots-inline {
+  display: inline-flex; gap: 0.25rem;
+  margin-left: 0.35rem; vertical-align: middle;
+}
+.dots-inline span {
+  width: 3px; height: 3px; border-radius: 50%;
+  animation: dp 1.2s ease-in-out infinite;
+}
+.dots-inline span:nth-child(1) { background: var(--grad-a); }
+.dots-inline span:nth-child(2) { background: var(--grad-b); animation-delay: 0.2s; }
+.dots-inline span:nth-child(3) { background: var(--grad-c); animation-delay: 0.4s; }
+@keyframes dp {
+  0%,100% { opacity: 0.2; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* ── READING SCREEN ── */
+#reading {
+  min-height: 100vh; flex-direction: column; justify-content: center;
+  padding: clamp(2rem, 6vw, 5rem); background: var(--read-bg);
+}
+
+.reading-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.48rem; letter-spacing: 0.32em;
+  color: var(--read-muted); text-transform: uppercase; margin-bottom: 1.5rem;
+}
+.reading-dots { display: flex; gap: 0.4rem; }
+.reading-dots span {
+  width: 5px; height: 5px; border-radius: 50%;
+  animation: dp 1.4s ease-in-out infinite;
+}
+.reading-dots span:nth-child(1) { background: var(--grad-a); }
+.reading-dots span:nth-child(2) { background: var(--grad-b); animation-delay: 0.25s; }
+.reading-dots span:nth-child(3) { background: var(--grad-c); animation-delay: 0.5s; }
+
+/* ── RESULT SCREEN ── */
+#result {
+  min-height: 100vh; flex-direction: column; justify-content: flex-start;
+  padding: clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 4rem) 7rem;
+  max-width: 760px; margin: 0 auto; width: 100%;
+  background: var(--read-bg);
+}
+
+.result-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 3.5rem; padding-bottom: 1.2rem;
+  border-bottom: 1px solid #d8d0c8;
+}
+
+.result-title-wrap { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.result-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600; font-size: 1rem; letter-spacing: -0.01em;
+  color: var(--read-text);
+}
+
+.result-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; letter-spacing: 0.14em;
+  color: var(--read-muted); text-transform: uppercase;
+}
+
+.result-stamp {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.42rem; letter-spacing: 0.1em;
+  color: #b0a890; text-align: right; line-height: 2; white-space: pre;
+}
+
+/* Gap record */
+.gap-record {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid #d0c8bc;
+  opacity: 0; transition: opacity 1s ease;
+  margin-bottom: 3.5rem;
+}
+.gap-record.visible { opacity: 1; }
+
+.gap-entry {
+  border-bottom: 1px solid #d8d0c8;
+}
+.gap-entry:last-child { border-bottom: none; }
+
+.gap-entry-header {
+  padding: 0.55rem 1.2rem; background: #ece6dc;
+  border-bottom: 1px solid #d8d0c8;
+  display: flex; justify-content: space-between;
+}
+
+.gap-entry-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.46rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--read-muted);
+}
+
+.gap-entry-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.42rem; color: #c0b8a8; letter-spacing: 0.1em;
+}
+
+.gap-entry-cols {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+}
+
+.gap-col {
+  padding: 0.75rem 1.2rem; background: #f8f3ec;
+}
+.gap-col.draft-col { background: #f0ebe2; }
+.gap-col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.4rem; letter-spacing: 0.14em;
+  text-transform: uppercase; margin-bottom: 0.3rem;
+}
+.feed-col .gap-col-label { color: var(--read-sepia); }
+.draft-col .gap-col-label { color: #a09080; }
+
+.gap-col-divider { background: #d8d0c8; }
+
+.gap-col-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.88rem; line-height: 1.75;
+  color: var(--read-text); font-weight: 300;
+}
+
+/* Portrait */
+.result-rule {
+  width: 0; height: 1px; background: var(--read-sepia);
+  margin-bottom: 2.5rem;
+  opacity: 0; transition: opacity 0.6s ease, width 1.2s ease 0.3s;
+}
+.result-rule.visible { opacity: 1; width: 100%; }
+
+.portrait-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.46rem; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--read-sepia);
+  margin-bottom: 1.2rem;
+  opacity: 0; transition: opacity 0.6s ease;
+}
+.portrait-label.visible { opacity: 1; }
+
+.portrait-headline {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  font-weight: 300; line-height: 1.2;
+  color: var(--read-text); margin-bottom: 1.5rem;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+.portrait-headline.visible { opacity: 1; }
+
+.portrait-body {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 2.1; color: var(--read-text);
+  font-weight: 300; white-space: pre-wrap;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+.portrait-body.visible { opacity: 1; }
+
+.portrait-sig {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic; font-size: clamp(0.9rem, 1.6vw, 1rem);
+  line-height: 1.9; color: var(--read-sepia);
+  border-left: 1px solid #d0c8bc; padding-left: 1.2rem;
+  margin-top: 1.5rem;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+.portrait-sig.visible { opacity: 1; }
+
+/* Discussion */
+.disc-wrap {
+  margin-top: 2.5rem; border: 1px solid #d0c8bc;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+.disc-wrap.visible { opacity: 1; }
+
+.disc-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.55rem 1.2rem; background: #ece6dc;
+  border-bottom: 1px solid #d0c8bc; flex-wrap: wrap; gap: 0.4rem;
+}
+
+.disc-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--read-muted);
+}
+
+.disc-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.4rem; letter-spacing: 0.1em; color: #b0a890;
+}
+
+.disc-item {
+  display: flex; gap: 0.8rem; align-items: flex-start;
+  padding: 0.8rem 1.2rem; border-bottom: 1px solid #d8d0c8;
+  background: #f8f3ec;
+}
+.disc-item:last-child { border-bottom: none; }
+
+.disc-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.42rem; color: #b0a890; flex-shrink: 0; padding-top: 0.2rem;
+}
+
+.disc-q {
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.92rem; color: var(--read-text); line-height: 1.7;
+}
+
+/* Footer */
+.result-footer {
+  margin-top: 3.5rem; padding-top: 1.5rem;
+  border-top: 1px solid #d0c8bc;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 0.8rem;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+.result-footer.visible { opacity: 1; }
+
+.footer-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.44rem; letter-spacing: 0.1em; color: #b0a890; font-style: italic;
+}
+
+.footer-btns { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+.result-btn {
+  background: transparent; border: 1px solid #d0c8bc;
+  color: var(--read-muted); font-family: 'DM Mono', monospace;
+  font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 0.5rem 1rem; cursor: pointer; transition: all 0.2s;
+}
+.result-btn:hover { border-color: var(--read-sepia); color: var(--read-sepia); }
+
+@media (max-width: 600px) {
+  .gap-grid { grid-template-columns: 1fr; }
+  .gap-divider { height: 3px; width: 100%; }
+  .gap-divider::after { transform: translate(-50%, -50%) rotate(0deg); }
+  .col-panel.feed-panel { border-right: 1px solid var(--feed-border); border-bottom: none; }
+  .col-panel.draft-panel { border-left: 1px solid var(--draft-border); border-top: none; }
+  .col-headers { grid-template-columns: 1fr; gap: 0.3rem; }
+  .col-header-divider { display: none; }
+  .col-header.draft-header { padding-left: 0; }
+  .intro-preview { grid-template-columns: 1fr; }
+  .preview-col.feed { border-right: none; border-bottom: 1px solid var(--border); }
+  .gap-entry-cols { grid-template-columns: 1fr; }
+  .gap-col-divider { height: 1px; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="prog-wrap"><div class="prog-fill" id="progFill"></div></div>
+
+<!-- INTRO -->
+<div id="intro" class="screen active">
+  <div class="intro-badge">Identity &amp; Society · Grades 11–12</div>
+
+  <div class="intro-title">
+    <span class="title-self">SELF</span>
+    <span class="title-v">v</span>
+    <span class="title-selfie">SELFIE</span>
+  </div>
+
+  <div class="intro-sub">The image is real. It is not complete.</div>
+
+  <p class="intro-premise">
+    You edit what others see.<br>
+    You know what you leave out.<br><br>
+    The question isn't why you edit.<br>
+    <strong>The question is what repeated editing does to the person doing it.</strong><br><br>
+    This instrument asks you to write both versions — what you present and what you don't. The same prompts, two answers. At the end, the gap between them is read.<br><br>
+    <em>The Draft is not the real you. Both versions are constructed. The gap between them is what's interesting.</em>
+  </p>
+
+  <div class="intro-preview">
+    <div class="preview-col feed">
+      <div class="preview-col-label">The Feed</div>
+      <div class="preview-col-desc">What you present. The version you'd post, share, or show.</div>
+    </div>
+    <div class="preview-col draft">
+      <div class="preview-col-label">The Draft</div>
+      <div class="preview-col-desc">What doesn't make it. The version you delete, hide, or don't say.</div>
+    </div>
+  </div>
+
+  <button class="begin-btn" onclick="begin()">Start →</button>
+  <div class="intro-note">Who are you when there is no audience?</div>
+</div>
+
+<!-- QUESTION ROOM -->
+<div id="room" class="screen">
+  <div class="room-hud">
+    <div class="hud-counter">Prompt <span id="qNum">1</span> of <span id="qTotal"></span></div>
+    <div class="hud-prompt-label" id="promptLabel"></div>
+    <div class="hud-gap" id="hudGap"></div>
+  </div>
+
+  <div class="col-headers">
+    <div class="col-header feed-header">
+      <div class="col-header-dot"></div>
+      The Feed
+    </div>
+    <div class="col-header-divider"></div>
+    <div class="col-header draft-header">
+      <div class="col-header-dot"></div>
+      The Draft
+    </div>
+  </div>
+
+  <div class="gap-grid">
+    <div class="col-panel feed-panel" id="feedPanel"></div>
+    <div class="gap-divider"></div>
+    <div class="col-panel draft-panel" id="draftPanel"></div>
+  </div>
+
+  <div class="room-nav">
+    <div class="nav-note" id="navNote"></div>
+    <button class="nav-btn primary" id="nextBtn" onclick="nextPrompt()" disabled>Next →</button>
+  </div>
+</div>
+
+<!-- READING -->
+<div id="reading" class="screen" style="background:var(--read-bg);">
+  <div class="reading-label">Reading the gap</div>
+  <div class="reading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div class="result-header">
+    <div class="result-title-wrap">
+      <div class="result-title">SELF v SELFIE</div>
+      <div class="result-sub">Gap record</div>
+    </div>
+    <div class="result-stamp" id="resultStamp"></div>
+  </div>
+
+  <div class="gap-record" id="gapRecord"></div>
+
+  <div class="result-rule" id="resultRule"></div>
+  <div class="portrait-label" id="portraitLabel">Reading</div>
+  <div class="portrait-headline" id="portraitHeadline"></div>
+  <div class="portrait-body" id="portraitBody"></div>
+  <div class="portrait-sig" id="portraitSig"></div>
+
+  <div class="disc-wrap" id="discWrap">
+    <div class="disc-header">
+      <div class="disc-label">For discussion</div>
+      <div class="disc-note">Derived from this gap record · for teacher use</div>
+    </div>
+    <div id="discList"></div>
+  </div>
+
+  <div class="result-footer" id="resultFooter">
+    <div class="footer-note">The image is real. It is not complete.</div>
+    <div class="footer-btns">
+      <button class="result-btn" onclick="window.print()">Save / Print</button>
+      <button class="result-btn" onclick="restart()">Start again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PROXY = "https://anthropic-proxy.justin-steinmetz.workers.dev";
+
+// ── PROMPTS ──
+// Each prompt has a label, a feed question, a draft question, and minimums.
+const PROMPTS = [
+  {
+    label: "A specific moment",
+    feed: {
+      q: "Describe a specific moment from the last two weeks that you shared, posted, or told as a story. What happened — and how did you tell it?",
+      sub: "An actual event. Not 'I usually...' — something specific.",
+      min: 30
+    },
+    draft: {
+      q: "Now describe what was actually happening for you in that moment — the part you edited out, the feeling underneath, the version you kept to yourself.",
+      sub: "What did you cut?",
+      min: 25
+    }
+  },
+  {
+    label: "A performance",
+    feed: {
+      q: "Describe a situation in the last month where you performed a version of yourself — more confident, more relaxed, more together, more certain than you actually felt. What was the context? What did you do?",
+      sub: "Specific situation. Not a type of situation — one instance.",
+      min: 30
+    },
+    draft: {
+      q: "What were you actually feeling or thinking during that performance? What would it have looked like if no one was watching?",
+      sub: null,
+      min: 25
+    }
+  },
+  {
+    label: "What you care about",
+    feed: {
+      q: "What do you visibly care about — the interests, causes, or values that appear in what you share, say, or do publicly? Be concrete: what did you actually post, share, or talk about in the last month?",
+      sub: null,
+      min: 20
+    },
+    draft: {
+      q: "What do you actually spend time thinking about, worrying about, or caring about privately — the things that don't appear in the public version? Name them specifically.",
+      sub: "Not 'deeper things' — actual specific preoccupations.",
+      min: 20
+    }
+  },
+  {
+    label: "Something you deleted",
+    feed: {
+      q: "Think of something you wrote, recorded, or almost shared — then deleted or kept back. What was it? What did you share instead, or what did you do with that impulse?",
+      sub: "A real example. Not a hypothetical.",
+      min: 20
+    },
+    draft: {
+      q: "Why did you delete it? What would it have said about you that you weren't ready for people to see?",
+      sub: null,
+      min: 20
+    }
+  },
+  {
+    label: "The audience",
+    feed: {
+      q: "Think of a specific person or group whose opinion of you matters most — whose impression shapes how you present yourself. Who are they, and what specifically do you want them to think?",
+      sub: null,
+      min: 20
+    },
+    draft: {
+      q: "What would happen if they saw the unedited version — the moment you described above, or the feelings you actually have? What specifically are you protecting them from seeing?",
+      sub: null,
+      min: 20
+    }
+  },
+  {
+    label: "The gap closing",
+    feed: {
+      q: "Is there a version of yourself you've presented so consistently that it's starting to feel true — a quality, a mood, a role you perform so often you've half-forgotten it started as performance? Describe it specifically.",
+      sub: null,
+      min: 25
+    },
+    draft: {
+      q: "What do you know about yourself that you have never posted, shared, or performed — something that remains entirely off the record? Name it as concretely as you can.",
+      sub: "Not a feeling in general — something specific.",
+      min: 20
+    }
+  }
+];
+
+const TOTAL = PROMPTS.length;
+let current = 0;
+let feedAnswers = new Array(TOTAL).fill('');
+let draftAnswers = new Array(TOTAL).fill('');
+const sessionId = 'SvS-' + Math.random().toString(36).slice(2,4).toUpperCase() + '-' +
+                            Math.random().toString(36).slice(2,4).toUpperCase();
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function begin() {
+  document.getElementById('qTotal').textContent = TOTAL;
+  show('room');
+  renderPrompt(0);
+}
+
+function renderPrompt(index) {
+  current = index;
+  const p = PROMPTS[index];
+
+  document.getElementById('progFill').style.width = (index / TOTAL * 100) + '%';
+  document.getElementById('qNum').textContent = index + 1;
+  document.getElementById('promptLabel').textContent = p.label;
+  document.getElementById('hudGap').textContent = `${TOTAL - index - 1} remaining`;
+  document.getElementById('nextBtn').textContent = index === TOTAL - 1 ? 'Read the gap →' : 'Next →';
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('navNote').textContent = 'Both sides required.';
+
+  buildPanel('feedPanel', p.feed, 'feed', index);
+  buildPanel('draftPanel', p.draft, 'draft', index);
+  checkComplete(index);
+
+  setTimeout(() => {
+    const first = document.getElementById('feedPanel').querySelector('textarea');
+    if (first) first.focus();
+  }, 100);
+}
+
+function buildPanel(panelId, prompt, side, index) {
+  const panel = document.getElementById(panelId);
+  panel.innerHTML = '';
+
+  const q = document.createElement('div');
+  q.className = 'col-prompt';
+  q.textContent = prompt.q;
+  panel.appendChild(q);
+
+  if (prompt.sub) {
+    const sub = document.createElement('div');
+    sub.className = 'col-prompt-sub';
+    sub.textContent = prompt.sub;
+    panel.appendChild(sub);
+  }
+
+  const ta = document.createElement('textarea');
+  ta.className = 'col-input';
+  ta.rows = 4;
+  ta.placeholder = side === 'feed' ? 'The version you show…' : 'The version you keep…';
+  ta.value = side === 'feed' ? (feedAnswers[index] || '') : (draftAnswers[index] || '');
+
+  const hint = document.createElement('div');
+  hint.className = 'col-hint';
+  const minL = prompt.min || 0;
+  hint.textContent = (minL && ta.value.trim().length < minL) ? 'keep going' : '';
+
+  ta.addEventListener('input', e => {
+    if (side === 'feed') feedAnswers[index] = e.target.value;
+    else draftAnswers[index] = e.target.value;
+    hint.textContent = (minL && e.target.value.trim().length < minL) ? 'keep going' : '';
+    checkComplete(index);
+  });
+
+  panel.appendChild(ta);
+  panel.appendChild(hint);
+}
+
+function checkComplete(index) {
+  const p = PROMPTS[index];
+  const feedOk = feedAnswers[index].trim().length >= (p.feed.min || 0);
+  const draftOk = draftAnswers[index].trim().length >= (p.draft.min || 0);
+  document.getElementById('nextBtn').disabled = !(feedOk && draftOk);
+}
+
+function nextPrompt() {
+  if (current === TOTAL - 1) {
+    readGap();
+  } else {
+    renderPrompt(current + 1);
+  }
+}
+
+// ── READ THE GAP ──
+async function readGap() {
+  document.getElementById('progFill').style.width = '100%';
+  show('reading');
+
+  const record = PROMPTS.map((p, i) => {
+    const f = (feedAnswers[i] || '').trim();
+    const d = (draftAnswers[i] || '').trim();
+    const fTag = !f ? ' [empty]' : f.length < 10 ? ' [minimal]' : '';
+    const dTag = !d ? ' [empty]' : d.length < 10 ? ' [minimal]' : '';
+    return `Prompt ${i+1} — ${p.label}:\n  Feed: ${f || '[no answer]'}${fTag}\n  Draft: ${d || '[no answer]'}${dTag}`;
+  }).join('\n\n');
+
+  const prompt = `You have administered SELF v SELFIE, a gap-engine identity instrument, to a student aged 16–18. The student answered the same prompts twice: once for The Feed (what they present) and once for The Draft (what they don't). The gap between the two is the primary data.
+
+Here is the complete gap record:
+
+${record}
+
+Your task is to read the gap — not to evaluate the Feed, not to validate the Draft, but to analyse the structure of what is systematically excluded, amplified, contradicted, and concealed.
+
+The central question of the project is: "Who are you when there is no audience?" The portrait should address this question through the evidence of the gap, not by answering it directly.
+
+Rules:
+1. Read across all six prompts for patterns. A student who amplifies confidence in the Feed and hides uncertainty in the Draft across multiple prompts is showing a structural pattern, not an individual choice.
+2. The most revealing data is often in prompt 6 (The gap closing) — where the student reflects on whether a performed version of themselves has started to feel real. Reference their specific answer there directly.
+3. [empty] and [minimal] on Draft answers are significant. What a student refuses to put in the Draft is as revealing as what they do.
+4. Do not judge the curation. Every person edits. The question is what the specific editing reveals about this specific student.
+5. Do not use therapeutic language: not 'authentic', not 'healing', not 'true self', not 'journey'.
+6. Do not reassure. Do not praise. Do not moralize.
+7. Write in second person. Do not begin with 'You'. Enter through something specific from their record.
+8. The final sentence should name where the student is — not direct them somewhere.
+9. Do not treat the Draft as more authentic than the Feed. Both are constructed. One is edited for an audience; the other is edited for the self. The reading is about the structure of the gap, not about which version is truer.
+10. Note if the Feed and Draft versions are suspiciously similar — this too is data, and worth naming.
+11. SPECIFICITY FLAG: if a student's answers operate at the level of abstract claim rather than concrete scene — e.g. "I seem confident" / "I'm actually insecure", "I hide my true feelings", "social media isn't the whole story" — name this directly in the reading. Abstract gaps tell us less than specific ones. If the data is thin, the portrait should say so precisely: what is missing, and what that absence might mean. Do not produce an elegant reading from generic material.
+
+Output format — exactly, no deviations:
+
+HEADLINE:
+[4–8 words. An observation about the structure of this student's gap. Not a type. Not a verdict. Something precise that could only apply to this record.]
+
+READING:
+[200–270 words. Reads the gap, not the person. Names what is systematically excluded, what is amplified, where the two versions contradict, and whether the curated version appears to be replacing the private one. Does not resolve.]
+
+SIGNATURE:
+[One sentence — the most specific thing the gap reveals about who this student is when there is no audience. Grounded in their actual answers.]
+
+DISCUSSION:
+Q1: [Derived from the largest or most consistent gap across the six prompts]
+Q2: [Derived from what the Draft version withheld or minimised]
+Q3: [Derived from the student's own answer to prompt 6 — what they said about whether the Feed is becoming real]`;
+
+  try {
+    const resp = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1100,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content.map(b => b.text || '').join('');
+
+    const headlineMatch  = text.match(/HEADLINE:\s*([\s\S]+?)(?=READING:|$)/i);
+    const readingMatch   = text.match(/READING:\s*([\s\S]+?)(?=SIGNATURE:|$)/i);
+    const signatureMatch = text.match(/SIGNATURE:\s*([\s\S]+?)(?=DISCUSSION:|$)/i);
+    const discMatch      = text.match(/DISCUSSION:\s*([\s\S]+)/i);
+
+    showResult(
+      headlineMatch  ? headlineMatch[1].trim()  : '—',
+      readingMatch   ? readingMatch[1].trim()   : text,
+      signatureMatch ? signatureMatch[1].trim() : '',
+      discMatch      ? discMatch[1].trim()      : ''
+    );
+  } catch(err) {
+    showResult('—', 'The reading could not be completed. The gap record remains.', '', '');
+  }
+}
+
+function showResult(headline, reading, signature, discussion) {
+  show('result');
+
+  const now = new Date();
+  document.getElementById('resultStamp').textContent =
+    sessionId + '\n' +
+    now.toLocaleDateString('en-GB') + ' ' +
+    now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  // Build gap record
+  const container = document.getElementById('gapRecord');
+  container.innerHTML = '';
+
+  PROMPTS.forEach((p, i) => {
+    const entry = document.createElement('div');
+    entry.className = 'gap-entry';
+
+    const header = document.createElement('div');
+    header.className = 'gap-entry-header';
+    const lbl = document.createElement('div');
+    lbl.className = 'gap-entry-label';
+    lbl.textContent = p.label;
+    const num = document.createElement('div');
+    num.className = 'gap-entry-num';
+    num.textContent = `Prompt ${i+1}`;
+    header.appendChild(lbl); header.appendChild(num);
+
+    const cols = document.createElement('div');
+    cols.className = 'gap-entry-cols';
+
+    const feedCol = document.createElement('div');
+    feedCol.className = 'gap-col feed-col';
+    const feedLbl = document.createElement('div');
+    feedLbl.className = 'gap-col-label'; feedLbl.textContent = 'The Feed';
+    const feedTxt = document.createElement('div');
+    feedTxt.className = 'gap-col-text';
+    feedTxt.textContent = (feedAnswers[i] || '').trim() || '[no entry]';
+    feedCol.appendChild(feedLbl); feedCol.appendChild(feedTxt);
+
+    const div = document.createElement('div');
+    div.className = 'gap-col-divider';
+
+    const draftCol = document.createElement('div');
+    draftCol.className = 'gap-col draft-col';
+    const draftLbl = document.createElement('div');
+    draftLbl.className = 'gap-col-label'; draftLbl.textContent = 'The Draft';
+    const draftTxt = document.createElement('div');
+    draftTxt.className = 'gap-col-text';
+    draftTxt.textContent = (draftAnswers[i] || '').trim() || '[no entry]';
+    draftCol.appendChild(draftLbl); draftCol.appendChild(draftTxt);
+
+    cols.appendChild(feedCol); cols.appendChild(div); cols.appendChild(draftCol);
+    entry.appendChild(header); entry.appendChild(cols);
+    container.appendChild(entry);
+  });
+
+  setTimeout(() => container.classList.add('visible'), 200);
+
+  setTimeout(() => {
+    document.getElementById('resultRule').classList.add('visible');
+    setTimeout(() => {
+      document.getElementById('portraitLabel').classList.add('visible');
+      document.getElementById('portraitHeadline').textContent = headline;
+      document.getElementById('portraitBody').textContent = reading;
+      document.getElementById('portraitSig').textContent = signature;
+      setTimeout(() => document.getElementById('portraitHeadline').classList.add('visible'), 200);
+      setTimeout(() => document.getElementById('portraitBody').classList.add('visible'), 700);
+      setTimeout(() => document.getElementById('portraitSig').classList.add('visible'), 1500);
+    }, 400);
+  }, 1400);
+
+  if (discussion) {
+    const list = document.getElementById('discList');
+    list.innerHTML = '';
+    discussion.split('\n').filter(l => l.trim()).forEach((line, i) => {
+      const cleaned = line.replace(/^Q\d+:\s*/i, '').trim();
+      if (!cleaned) return;
+      const item = document.createElement('div');
+      item.className = 'disc-item';
+      const num = document.createElement('div');
+      num.className = 'disc-num';
+      num.textContent = String(i+1).padStart(2,'0');
+      const q = document.createElement('div');
+      q.className = 'disc-q';
+      q.textContent = cleaned;
+      item.appendChild(num); item.appendChild(q);
+      list.appendChild(item);
+    });
+    setTimeout(() => document.getElementById('discWrap').classList.add('visible'), 3800);
+  }
+
+  setTimeout(() => document.getElementById('resultFooter').classList.add('visible'), 4600);
+}
+
+function restart() {
+  feedAnswers = new Array(TOTAL).fill('');
+  draftAnswers = new Array(TOTAL).fill('');
+  current = 0;
+  document.getElementById('progFill').style.width = '0%';
+  ['gapRecord','resultRule','portraitLabel','portraitHeadline',
+   'portraitBody','portraitSig','discWrap','resultFooter']
+    .forEach(id => document.getElementById(id).classList.remove('visible'));
+  document.getElementById('discList').innerHTML = '';
+  show('intro');
+}
+</script>
+</body>
+</html>
